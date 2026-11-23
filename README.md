@@ -50,13 +50,15 @@ Move the left stick and the Controller Cursor appears in your bag, chests, the b
 
 Hold LT and the D-pad opens your consumables or emotes, sits you down, or takes out the hammer.
 
-![LT and D-pad shortcuts](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/lt-shortcuts.gif?v=2)
+![LT shortcuts on the D-pad, and the consumables wheel](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/lt-shortcuts.jpg)
 
 ### First-launch setup
 
 A quick setup on first launch, so everything's ready your way from minute one.
 
-![First-launch setup](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/first-launch-setup.gif?v=2)
+![Choose your hotbar](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/setup-hotbar.jpg)
+
+![Choose your HUD layout](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/setup-hud.jpg)
 
 ### Optional styles for vanilla HUD elements
 
