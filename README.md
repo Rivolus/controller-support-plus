@@ -12,7 +12,7 @@
 
 - Install with a mod manager (r2modman or Thunderstore Mod Manager). The only dependency is BepInExPack for Valheim, and your mod manager adds it for you.
 - Load into a world with your controller. Press Y on Begin Setup, then pick your hotbar and HUD layout. Each choice previews live.
-- The mod adds its own controller layout, called PRO, and turns it on for you. The quick slots, the LT shortcuts and the extra buttons need it.
+- The mod adds its own controller layout, called **PRO**, and turns it on for you. The quick slots, the LT shortcuts and the extra buttons need it.
 
 > Button names use Xbox labels. On PlayStation: A = ✕, B = ○, X = □, Y = △, LB/RB = L1/R1, LT/RT = L2/R2, Select = Share/Create.
 
@@ -54,7 +54,7 @@ Hold LT and the D-pad opens your consumables or emotes, sits you down, or takes 
 
 ### First-launch setup
 
-The first time you load into a world with your controller, a Begin Setup prompt appears. Press Y and pick a hotbar layout and a HUD layout. Each choice shows live on your HUD.
+A quick setup on first launch, so everything's ready your way from minute one.
 
 ![First-launch setup](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/first-launch-setup.gif)
 
@@ -62,7 +62,7 @@ The first time you load into a world with your controller, a Begin Setup prompt 
 
 Buffs and debuffs, the pickup feed and equip progress can each stay vanilla or take the mod's style. You'll find them in Settings.
 
-## 🕹 Controls
+## 🕹️ Controls
 
 ### Inventory and chests
 
@@ -86,7 +86,7 @@ Buffs and debuffs, the pickup feed and equip progress can each stay vanilla or t
 
 You can switch back to one of the game's own layouts anytime in its controller settings.
 
-## ⚙ Settings
+## ⚙️ Settings
 
 Open the pause menu and press Select (View on Xbox, Share/Create on PlayStation), or pick the **Controller Support Plus** button in the pause menu. Switch tabs with LB and RB. Changes show on your HUD as you make them. The same options are in your mod manager.
 
@@ -113,4 +113,4 @@ Made by a solo UX/UI designer getting into modding. I built Controller Support P
 
 If you enjoy the mod and want to support me:
 
-<a href="https://ko-fi.com/T5F12AQJQQ"><img height="36" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" alt="Buy Me a Coffee at ko-fi.com"></a>
+[![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T5F12AQJQQ)
