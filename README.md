@@ -101,4 +101,4 @@ Found a bug or have an idea? [Open an issue on GitHub](https://github.com/Rivolu
 
 If you enjoy the mod and want to support me:
 
-<a href="https://ko-fi.com/T5F12AQJQQ"><img height="36" src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" alt="Support me on Ko-fi"></a>
+<a href="https://ko-fi.com/T5F12AQJQQ"><img height="36" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" alt="Buy Me a Coffee at ko-fi.com"></a>
