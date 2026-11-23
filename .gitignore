@@ -1,0 +1,9 @@
+# build outputs
+bin/
+obj/
+dist/
+package/*
+!package/icon.png
+# local backups and configs
+config-backup*/
+gale-backup*/
