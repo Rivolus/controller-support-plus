@@ -91,8 +91,14 @@ You can switch back to one of the game's own layouts anytime in its controller s
 
 ## Known issues
 
-None known yet. <!-- TODO Rob: list any known issues, and where to report bugs. -->
+None known yet.
 
-## Credits
+## About
 
-Made by RobVilladiego.
+Made by a solo UX/UI designer getting into modding. I built Controller Support Plus with AI assistance and spent most of my time on the feel: smooth menus, clear prompts, and small touches that make playing on a controller satisfying.
+
+Found a bug or have an idea? [Open an issue on GitHub](https://github.com/Rivolus/controller-support-plus/issues). I read every one.
+
+If you enjoy the mod and want to support me:
+
+<a href="https://ko-fi.com/T5F12AQJQQ"><img height="36" src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" alt="Support me on Ko-fi"></a>
