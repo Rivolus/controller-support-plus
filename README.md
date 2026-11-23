@@ -22,7 +22,7 @@
 
 Eight items on your HUD: four on the D-pad, four more with LT and the face buttons.
 
-![Controller Hotbar](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/hotbar.gif)
+![Controller Hotbar](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/hotbar.gif?v=2)
 
 ### Three hotbar layouts
 
@@ -38,25 +38,25 @@ Cross, Compact cross or Row. All three hold the same eight items, so pick the sh
 
 Drag an item onto your bag's top row. The button shown in the slot's corner is the one that uses it, like 1 to 8 on keyboard.
 
-![Assigning items to the hotbar](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/assign-hotbar.gif)
+![Assigning items to the hotbar](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/assign-hotbar.gif?v=2)
 
 ### Inventory and menus
 
 Move the left stick and the Controller Cursor appears in your bag, chests, the build menu and pickers. A button guide under the bag shows what each button does.
 
-![Controller Cursor in the bag and a chest](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/ui-navigation.gif)
+![Controller Cursor in the bag and a chest](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/ui-navigation.gif?v=2)
 
 ### LT shortcuts
 
 Hold LT and the D-pad opens your consumables or emotes, sits you down, or takes out the hammer.
 
-![LT and D-pad shortcuts](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/lt-shortcuts.gif)
+![LT and D-pad shortcuts](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/lt-shortcuts.gif?v=2)
 
 ### First-launch setup
 
 A quick setup on first launch, so everything's ready your way from minute one.
 
-![First-launch setup](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/first-launch-setup.gif)
+![First-launch setup](https://raw.githubusercontent.com/Rivolus/controller-support-plus/main/docs/images/first-launch-setup.gif?v=2)
 
 ### Optional styles for vanilla HUD elements
 
