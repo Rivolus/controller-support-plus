@@ -7,3 +7,14 @@ package/*
 # local backups and configs
 config-backup*/
 gale-backup*/
+profile-backup*/
+
+# anything that could hold the Thunderstore token (it lives only in the TCLI_AUTH_TOKEN environment variable)
+.env
+.env.*
+*.env
+*token*
+*.token
+*secret*
+.tcli/
+thunderstore.local.toml

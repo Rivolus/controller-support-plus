@@ -17,8 +17,11 @@ namespace ControllerPro
     [BepInPlugin(Guid, "Controller Support Plus", Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "robvilladiego.controllerpro";
-        public const string Version = "0.92.30";
+        public const string Guid = "rivolus.controllersupportplus";
+        public const string Version = "1.0.1";
+        /* Jotunn's Harmony id: the mod's ZInput postfixes run after its own (1.0.1, a player's report: with a Jotunn mod that adds
+           key binds, LT + D-pad down also sat and LT + A also jumped) */
+        public const string JotunnGuid = "com.jotunn.jotunn";
 
         public static ConfigEntry<bool> Enabled, ReplaceVanillaTriggers, ShowHints, HideVanillaHints;
         public static ConfigEntry<float> HoldShort, HoldLong, RingDelay;
@@ -79,9 +82,16 @@ namespace ControllerPro
             // Every setting is declared first, in the menu's order; only then are older settings read and cleared out (clearing
             // them in between would let later settings take their places in the list and shuffle the order).
             // ----- the settings in the mod manager: exactly the ones in the Controller Support Plus Settings window (0.89.0) -----
-            HudPreset = Config.Bind("1. HUD layout", "HUDPreset", "Vanilla", new ConfigDescription("Vanilla (the game's HUD as it is), BottomHUD (resource bars bottom left, hotbar bottom centre, minimap bottom right) or ActionRPG (resource bars top left, hotbar bottom left, minimap top right). Each preset sets its own good starting choices for the styles below.", new AcceptableValueList<string>("Vanilla", "BottomHUD", "ActionRPG")));
+            /* "1. General", as the window's General tab (1.0.1; "1. HUD layout" before, carried over below) */
+            HudPreset = Config.Bind("1. General", "HUDPreset", "Vanilla", new ConfigDescription("Vanilla (the game's HUD as it is), BottomHUD (resource bars bottom left, hotbar bottom centre, minimap bottom right) or ActionRPG (resource bars top left, hotbar bottom left, minimap top right). Each preset sets its own good starting choices for the styles below.", new AcceptableValueList<string>("Vanilla", "BottomHUD", "ActionRPG")));
+            /* 1.0.1 (Rob): the game's own auto-pickup as a setting; on the Controller Support Plus layout its block + left stick chord is off */
+            AutoPickup = Config.Bind("4. Misc", "AutoPickup", true, "The game's own auto-pickup: items you walk over go straight into the bag. The same switch as the game's own toggle key.");
+            /* 1.0.1 (Rob): the controller cursor in the bag, the build menu and the pickers (an internal setting before, carried over below) */
+            CursorEnabled = Config.Bind("1. General", "ControllerCursor", true, "Using the left stick inside the inventory, the build menu and the pickers brings up a controller cursor. Using the D-pad puts it away again.");
             HotbarStyle = Config.Bind("2. Hotbar", "HotbarLayout", "Cross", new ConfigDescription("How the Controller Hotbar looks: Cross, CompactCross or Row.", new AcceptableValueList<string>("Cross", "CompactCross", "Row")));
             SwapDpadActions = Config.Bind("2. Hotbar", "SwapDpadItemsAndLTActions", false, "Off: the D-pad uses hotbar items 1-4 and LT + D-pad does the actions (consumables, emotes, hammer, sit). On: the other way round.");
+            /* 1.0.1 (Rob): the LT + D-pad layer itself on or off; off, LT leaves the D-pad as it is */
+            LtDpadLayer = Config.Bind("2. Hotbar", "LTDpadLayer", true, "On: holding LT switches the D-pad to its other set (the actions, or the items when swapped). Off: LT leaves the D-pad as it is.");
             ShowMapHints = Config.Bind("3. HUD elements", "ShowButtonHints", true, "Show the game's button hints (Attack, Block, Dodge, the build hints, the radial wheel's hints) on the controller.");
             /* Compact renamed Detailed (0.92.13): an old Compact in the file is read before it is thrown out as unknown */
             bool wasCompact = false;
@@ -90,10 +100,11 @@ namespace ControllerPro
             if (wasCompact) BuffStyle.Value = "Detailed";
             FeedPos = Config.Bind("3. HUD elements", "PickUpNotificationStyle", "Vanilla", new ConfigDescription("New (Modern: the mod's pickup list at the right edge) or Vanilla (the game's own message in the top left).", new AcceptableValueList<string>("New", "Vanilla")));
             EquipProgress = Config.Bind("3. HUD elements", "EquipProgressBarStyle", "Vanilla", new ConfigDescription("Ring (Radial progress: a ring around the crosshair) or Vanilla (the game's own bar).", new AcceptableValueList<string>("Ring", "Vanilla")));
-            LtSelectSettings = Config.Bind("4. Input and compatibility", "LTSelectOpensSettings", false, "LT + Select opens the Controller Support Plus Settings straight from play, instead of the chat.");
-            HudOnKbm = Config.Bind("4. Input and compatibility", "KeepHUDLayoutOnKeyboardAndMouse", false, "Keep the HUD preset's layout while using keyboard and mouse.");
+            LtSelectSettings = Config.Bind("1. General", "LTSelectOpensSettings", false, "LT + Select opens the Controller Support Plus Settings straight from play, instead of the chat.");
+            HudOnKbm = Config.Bind("4. Misc", "KeepHUDLayoutOnKeyboardAndMouse", false, "Keep the HUD preset's layout while using keyboard and mouse.");
             // their values from before 0.89.0, carried over from their old places
             Carry("HUD Style", "Preset", HudPreset);
+            Carry("1. HUD layout", "HUDPreset", HudPreset);   /* its section before 1.0.1, read last: the newest wins */
             Carry("Controller Hotbar", "HotbarStyle", HotbarStyle);
             Carry("HUD Style - Settings", "ShowButtonGuide", ShowMapHints);
             Carry("HUD Style - Settings", "BuffsAndDebuffs", BuffStyle);
@@ -106,11 +117,16 @@ namespace ControllerPro
             Carry("2. HUD elements", "HotbarLayout", HotbarStyle);
             Carry("3. Input and compatibility", "SwapDpadItemsAndLTActions", SwapDpadActions);
             Carry("2. HUD elements", "ButtonHints", ShowMapHints);
+            ShowMapHints.SettingChanged += delegate { HintsLink.FromMod(); };   /* one setting with the game's own Show button hints (1.0.0) */
             Carry("2. HUD elements", "BuffsAndDebuffsStyle", BuffStyle);
             Carry("2. HUD elements", "PickUpNotificationStyle", FeedPos);
             Carry("2. HUD elements", "EquipProgressBarStyle", EquipProgress);
             Carry("3. Input and compatibility", "LTSelectOpensSettings", LtSelectSettings);
             Carry("3. Input and compatibility", "KeepHUDLayoutOnKeyboardAndMouse", HudOnKbm);
+            /* 1.0.4 (Rob): "Input and compatibility" became "Misc"; LT + Select moved to General, Auto-pickup to Misc */
+            Carry("4. Input and compatibility", "LTSelectOpensSettings", LtSelectSettings);
+            Carry("4. Input and compatibility", "KeepHUDLayoutOnKeyboardAndMouse", HudOnKbm);
+            Carry("1. General", "AutoPickup", AutoPickup);
             if (HudPreset.Value != "Vanilla" && HudPreset.Value != "BottomHUD" && HudPreset.Value != "ActionRPG") HudPreset.Value = "Vanilla";
 
             // ----- everything else: fixed at the mod's own choices, in a file of the mod's own beside it, not in the mod manager -----
@@ -121,8 +137,6 @@ namespace ControllerPro
             FavSecondary = Internal.Bind(SecHotbar, "SecondarySet", true, "A second set of four favorites on the face buttons while LT is held. While it is on, LT no longer opens the radial menu or stows the weapon. Only works in the Alternative 1 controller layout, where LT is not block.");
             HideHotbar = Internal.Bind(SecHotbar, "HideVanillaHotbar", true, "Hide Valheim's own hotbar (the row of 8 at the top left) while the Controller Hotbar is in use. Not the Controller Hotbar itself. The same items are still the first row of the inventory.");
             FavMarkers = Internal.Bind(SecHotbar, "MarkItemsInBag", true, "On the controller, show the Controller Hotbar button an item is on in its bag slot's top left corner, in place of the game's number keys (which are hidden on the controller).");
-            FavX = Internal.Bind(SecHotbar, "ClusterFromRight", 140f, "No longer used since 0.66.0: the hotbar keeps the minimap's distance from the screen edges, like the resource bars.");
-            FavY = Internal.Bind(SecHotbar, "ClusterFromBottom", 150f, "No longer used since 0.66.0: the hotbar keeps the minimap's distance from the screen edges, like the resource bars.");
             FavScale = Internal.Bind(SecHotbar, "ClusterScale", 1f, "Size of the favorites cluster.");
             FavDownHold = Internal.Bind(SecHotbar, "DownHoldSeconds", 0.40f, "With a favorite on D-pad down: tap uses the favorite, holding this long does the vanilla D-pad down action instead.");
             FavFlash = Internal.Bind(SecHotbar, "EquippedFlashSeconds", 0.3f, "Length of the white flash on a favorite the moment its item finishes equipping. 0 turns it off.");
@@ -143,12 +157,12 @@ namespace ControllerPro
             HudPickSeen = Internal.Bind(SecLayout, "HudLayoutPickDone", false, "Set by the mod: true once a HUD layout has been confirmed in the first-launch pick, so its plaque does not show again. false shows the plaque again. The pick can always be opened from Controller Support Plus Settings.");
             ShowMinimap = Internal.Bind(SecLayout, "ShowMinimap", true, "Show the small minimap on the controller, in every preset. Off hides it; its gameplay hints move up into its place and the status effects into the corner.");
             BuffPos = Internal.Bind(SecLayout, "BuffsAndDebuffsPosition", "TopRight (Vanilla)", new ConfigDescription("Where the slim buffs and debuffs sit: TopRight (Vanilla) (where the game has them), TopLeft (in the resource bars group, between the bars and the Forsaken power; needs Horizontal or Mixed bars, and in Bottom HUD that group is in the bottom left), BottomRight (just left of the minimap, lined up with its bottom; beside it at the top when the minimap is at the top), BottomLeft (a column in the bottom left corner reading upward, above the hotbar or the resource bars when they are there) or BottomCenter (a centred row at the bottom, above the hotbar and the game's stamina bar when they are there). A place the layout cannot give falls back to TopRight.", new AcceptableValueList<string>("TopRight (Vanilla)", "TopLeft", "BottomRight", "BottomLeft", "BottomCenter")));
-            ProLayout = Internal.Bind("Controls", "UseProLayout", true, "Use the PRO controller layout: the game's Alternative 1 layout with the mod's remaps on top. It is also a fourth choice in the game's own controller layout setting, which is the easier place to change it. Picking Classic, Alternative 1 or Alternative 2 there turns this off.");
-            RemapDodge = Internal.Bind("Controls", "DodgeAndSneakOnB", true, "PRO layout only: tapping B dodges on its own (no need to hold block), and holding B toggles sneak.");
-            SheatheOnRs = Internal.Bind("Controls", "SheatheOnRightStick", true, "PRO layout only: clicking the right stick puts away the weapon or tool in hand, or takes it back out (the game's own sheathe), instead of sneaking. Only while DodgeAndSneakOnB is on, so sneak stays on holding B. With the hammer out the click stays the game's own.");
+            ProLayout = Internal.Bind("Controls", "UseProLayout", true, "Use the Controller Support Plus controller layout (called PRO before 1.0.1): the game's Alternative 1 layout with the mod's remaps on top. It is also a fourth choice in the game's own controller layout setting, which is the easier place to change it. Picking Classic, Alternative 1 or Alternative 2 there turns this off.");
+            RemapDodge = Internal.Bind("Controls", "DodgeAndSneakOnB", true, "Controller Support Plus layout only: tapping B dodges on its own (no need to hold block), and holding B toggles sneak.");
+            SheatheOnRs = Internal.Bind("Controls", "SheatheOnRightStick", true, "Controller Support Plus layout only: clicking the right stick puts away the weapon or tool in hand, or takes it back out (the game's own sheathe), instead of sneaking. Only while DodgeAndSneakOnB is on, so sneak stays on holding B. With the hammer out the click stays the game's own.");
             ObjectSlots = Internal.Bind("Controls", "ObjectSlots", true, "On the controller, using a mannequin, an item stand, an item frame or a boss altar opens the bag with the object's slots under it, like a chest. RT puts the focused item on it at once, RT on its slots takes it back. Items that cannot go on it are greyed. Every rule is the object's own.");
             SneakHold = Internal.Bind("Controls", "SneakHoldSeconds", 0.35f, "How long B is held before it toggles sneak instead of dodging.");
-            PowerChord = Internal.Bind("Controls", "ForsakenPowerOnLBAndRB", true, "PRO layout only: pressing LB and RB together uses the Forsaken power.");
+            PowerChord = Internal.Bind("Controls", "ForsakenPowerOnLBAndRB", true, "Controller Support Plus layout only: pressing LB and RB together uses the Forsaken power.");
             ChordWindow = Internal.Bind("Controls", "TogetherWindowSeconds", 0.12f, "How close together LB and RB must be pressed to count as pressed together. Holding one and pressing the other later is not the combination.");
             ChordGrace = Internal.Bind("Controls", "RBWaitSeconds", 0.05f, "While a Forsaken power is ready, RB waits this long before doing its own job, to see whether LB joins it. Without it, pressing RB a hair before LB starts an attack. 0 turns the wait off.");
             Enabled = Internal.Bind("General", "Enabled", true, "Master switch. The mod only acts while a controller is the active input; it steps aside as soon as keyboard or mouse is used.");
@@ -156,7 +170,10 @@ namespace ControllerPro
             DotCrosshair = Internal.Bind("Crosshair", "DotCrosshair", true, "On the controller, show a small dot in the middle of the screen instead of the game's cross. With keyboard or mouse the cross comes back.");
             EquipRingFor = Internal.Bind("Crosshair", "EquipRingShowsFor", "Everything", new ConfigDescription("With the Ring: Everything (every equip, unequip or reload that takes any time) or VanillaBarsOnly (only the longer ones the game shows its own bar for, over half a second).", new AcceptableValueList<string>("Everything", "VanillaBarsOnly")));
             EquipRingLabel = Internal.Bind("Crosshair", "EquipRingLabel", true, "With the Ring: show the action's name (Equipping ...) to the right of the ring, for the actions the game shows its own bar for. It fades out while the game shows a prompt by the crosshair.");
-            CursorEnabled = Internal.Bind(SecCursor, "Enabled", true, "Using the left stick inside the inventory brings up a controller cursor. Using the D-pad puts it away again.");
+            /* the cursor's on/off moved to the mod manager's file (1.0.1): an Off kept here before is carried over, then cleared */
+            ConfigEntry<bool> oldCursor = Internal.Bind(SecCursor, "Enabled", true, "old");
+            if (!oldCursor.Value) CursorEnabled.Value = false;
+            Internal.Remove(oldCursor.Definition);
             CursorSlotSpeed = Internal.Bind(SecCursor, "SpeedOverSlotsAndButtons", 720f, "Cursor speed while it is over something that can be pressed. Pixels per second on a 1080-high screen, at full stick.");
             CursorPanelSpeed = Internal.Bind(SecCursor, "SpeedInsidePanels", 1250f, "Cursor speed while it is over a panel but not over a slot or button.");
             ScrollSpeed = Internal.Bind(SecCursor, "ListScrollSpeed", 1200f, "How fast the right stick scrolls a list in the inventory (the recipe list, a large chest), at full stick. 0 turns it off.");
@@ -221,9 +238,17 @@ namespace ControllerPro
             NotePreset();
             Config.Save();
             new Harmony(Guid).PatchAll(Assembly.GetExecutingAssembly());
+#if DEV
+            /* in-game check of the Jotunn clash (1.0.1): wakes Jotunn's input handling after the mod's own patches, as a Jotunn mod with key binds does */
+            JotunnWake = Internal.Bind("Compatibility test", "WakeJotunnInput", false, "Developer build only: wake Jotunn's input handling at start, after this mod's own patches, as a Jotunn mod with key binds does. For checking that LT shortcuts do not also do the game's own action with Jotunn.");
+            if (JotunnWake.Value) JotunnCheck.Wake();
+#endif
             Log.LogInfo("Controller Support Plus " + Version + " loaded");
         }
-        static string PresetNote { get { return System.IO.Path.Combine(Paths.ConfigPath, "robvilladiego.controllerpro.lastpreset"); } }
+#if DEV
+        static ConfigEntry<bool> JotunnWake;
+#endif
+        static string PresetNote { get { return System.IO.Path.Combine(Paths.ConfigPath, Guid + ".lastpreset"); } }
         static void NotePreset() { try { System.IO.File.WriteAllText(PresetNote, HudPreset.Value); } catch (Exception) { } }
         static void ResetStyles(string why)
         {
@@ -247,7 +272,7 @@ namespace ControllerPro
         public static ConfigEntry<bool> CursorEnabled, FavDimSprint, DimPanels, DotCrosshair, EquipRingLabel;
         public static ConfigEntry<string> EquipProgress, EquipRingFor;
         public static bool EquipRing { get { return EquipProgress != null && EquipProgress.Value == "Ring" && Enabled.Value && ZInput.IsGamepadActive(); } }
-        public static ConfigEntry<bool> HudOnKbm, LtSelectSettings, SwapDpadActions, HudPickSeen;
+        public static ConfigEntry<bool> HudOnKbm, LtSelectSettings, SwapDpadActions, HudPickSeen, AutoPickup, LtDpadLayer;
         static ConfigFile Internal;   // the settings that are not in the mod manager (0.89.0)
         public static ConfigEntry<float> WheelHintsExtra, WheelReachSeen, HeaderSeen, BodySeen;
         // keyboard and mouse with a mod preset (Bottom HUD, Action RPG) applied to them: the gameplay hints stack as on the controller
@@ -279,7 +304,7 @@ namespace ControllerPro
         public static ConfigEntry<bool> LtInSetMiddle;
         public static ConfigEntry<float> DimStrength, FavFlash, SneakHold, ChordWindow, ChordGrace, ScrollSpeed;
         public static ConfigEntry<bool> RemapDodge, PowerChord, ProLayout, HideHud, FavAssignSound, SheatheOnRs, ObjectSlots;
-        public static ConfigEntry<float> FavX, FavY, FavScale, FavDownHold, HintPadding, GlyphSize, StripExtraWidth, RingFullBeat;
+        public static ConfigEntry<float> FavScale, FavDownHold, HintPadding, GlyphSize, StripExtraWidth, RingFullBeat;
 
         private void Update()
         {
@@ -292,6 +317,8 @@ namespace ControllerPro
             t = Perf.Lap("button remaps", t);
             try { BuildCursor.Update(); } catch (Exception e) { BuildCursor.Stop(); Core.Fail(e); }
             Perf.Lap("build cursor", t);
+            try { AutoPickupLink.Tick(); } catch (Exception e) { Plugin.Log.LogWarning("Auto-pickup: " + e.Message); }
+            try { JotunnCheck.Tick(); } catch (Exception e) { Plugin.Log.LogWarning("Jotunn check: " + e.Message); }
         }
 
         private void LateUpdate()
@@ -543,19 +570,106 @@ namespace ControllerPro
     }
 #endif
 
+    // ---------- Show button hints: the mod's setting and the game's own are one (1.0.0, Rob) ----------
+    // The game keeps its "Show button hints" (Settings > Gameplay) as the KeyHints preference and applies it through
+    // KeyHints.ApplySettings. A change in the mod's window writes that preference and applies it; whenever the game applies
+    // it (at start, after its Settings screen's OK), the mod's setting takes the game's value.
+    static class HintsLink
+    {
+        public static void FromMod()
+        {
+            int v = Plugin.ShowMapHints.Value ? 1 : 0;
+            if (PlatformPrefs.GetInt("KeyHints", 1) == v) return;
+            PlatformPrefs.SetInt("KeyHints", v);
+            try { PlatformPrefs.Save(); } catch (Exception e) { Plugin.Log.LogWarning("Button hints: the game's setting not saved: " + e.Message); }
+            if (KeyHints.instance != null) KeyHints.instance.ApplySettings();
+        }
+        public static void FromGame()
+        {
+            bool on = PlatformPrefs.GetInt("KeyHints", 1) == 1;
+            if (Plugin.ShowMapHints != null && Plugin.ShowMapHints.Value != on) Plugin.ShowMapHints.Value = on;
+        }
+    }
+    // ---------- Auto-pickup: the mod's setting and the game's own switch are one (1.0.1, Rob) ----------
+    // The game keeps auto-pickup in one switch (Player.m_enableAutoPickup, on at every start) and flips it with its toggle
+    // key, or block + left stick on the controller. The setting in the window sets that switch; a flip by the game's own
+    // key (keyboard, or the chord in the game's own layouts) is taken into the setting, so both always agree. On the
+    // Controller Support Plus layout the chord is off (left stick is sprint there, so sprinting while blocking flipped it).
+    static class AutoPickupLink
+    {
+        static readonly FieldInfo F_on = AccessTools.Field(typeof(Player), "m_enableAutoPickup");
+        static bool seen = true, logged;
+        public static void Tick()
+        {
+            if (F_on == null || Plugin.AutoPickup == null) return;
+            bool game = (bool)F_on.GetValue(null);
+            if (game != seen) { seen = game; if (Plugin.AutoPickup.Value != game) Plugin.AutoPickup.Value = game; return; }   // the game flipped it
+            if (game != Plugin.AutoPickup.Value)
+            {
+                F_on.SetValue(null, Plugin.AutoPickup.Value); seen = Plugin.AutoPickup.Value;
+                if (!logged) { logged = true; Plugin.Log.LogInfo("Auto-pickup: the game's switch set " + (seen ? "on" : "off") + " from the setting"); }
+            }
+        }
+        // the chord is the game's own in its own layouts; on the Controller Support Plus layout it does nothing
+        public static bool ChordOff { get { return Pro.On; } }
+    }
+
+    // ---------- Jotunn (1.0.1) ----------
+    // Jotunn's input handling, once a Jotunn mod with key binds wakes it, adds its own postfix to the game's button reads,
+    // and that postfix sets the result back to the game's raw value. Run after the mod's, it undid every press the mod
+    // holds back (LT + D-pad down also sat, LT + A also jumped). The mod's postfixes are ordered after Jotunn's
+    // (HarmonyAfter); without Jotunn, or with its input handling asleep, nothing changes. Once in a world, the order the
+    // game's button read is patched in goes to the log, to check.
+    static class JotunnCheck
+    {
+        static bool logged;
+#if DEV
+        public static void Wake()
+        {
+            Type t = AccessTools.TypeByName("Jotunn.Managers.InputManager");
+            PropertyInfo inst = t != null ? AccessTools.Property(t, "Instance") : null;
+            if (inst == null) { Plugin.Log.LogInfo("Jotunn: not installed, nothing to wake"); return; }
+            inst.GetValue(null, null);
+            Plugin.Log.LogInfo("Jotunn: its input handling woken after this mod's patches");
+        }
+#endif
+        public static void Tick()
+        {
+            if (logged || Player.m_localPlayer == null) return;
+            logged = true;
+            Patches info = Harmony.GetPatchInfo(AccessTools.Method(typeof(ZInput), "GetButtonDown", new[] { typeof(string) }));
+            if (info == null) return;
+            bool jotunn = false;
+            foreach (Patch p in info.Postfixes) if (p.owner == Plugin.JotunnGuid) jotunn = true;
+            if (!jotunn) return;   /* nothing to report without Jotunn's input handling */
+            List<string> owners = new List<string>();
+            foreach (Patch p in info.Postfixes) owners.Add(p.owner + (p.after != null && p.after.Length > 0 ? " (after " + string.Join(", ", p.after) + ")" : ""));
+            Plugin.Log.LogInfo("Jotunn: its input handling is on; the game's button reads are patched by (in the order added): " + string.Join(" | ", owners.ToArray()) + ". This mod's are set to run after Jotunn's, so the presses it holds back stay held back");
+        }
+    }
+
+    [HarmonyPatch(typeof(KeyHints), "ApplySettings")]
+    static class Patch_KeyHintsApply
+    {
+        static void Postfix() { try { HintsLink.FromGame(); } catch (Exception e) { Plugin.Log.LogWarning("Button hints: " + e.Message); } }
+    }
+
     // ---------- input suppression ----------
     // Vanilla reads buttons through ZInput. While the game's own inventory code runs, these patches
     // hide the presses the mod has taken over. The mod reads the real values after vanilla is done.
     [HarmonyPatch(typeof(ZInput), "GetButtonDown")]
     static class Patch_GetButtonDown
     {
+        /* after Jotunn's own postfix (1.0.1): it sets the result back to the game's raw value, so ours must come last */
+        [HarmonyAfter(Plugin.JotunnGuid)]
         static void Postfix(string name, ref bool __result)
         {
             if (Core.Bypass) return;   // the mod's own reads see the real value
             if (ModSettings.Blocking && name.StartsWith("Joy")) { __result = false; return; }
+            if (__result && name == "JoyAutoPickup" && AutoPickupLink.ChordOff) { __result = false; return; }   /* 1.0.1: block + sprint no longer flips auto-pickup on the Controller Support Plus layout; the setting does it */
             if (Core.PadRadialLt && name == "JoyRadial") { __result = false; return; }
             if (name == "JoyMap" && ModSettings.MenuButtonUp) { __result = false; return; }
-            if (name == "JoyChat" && ModSettings.LtSelectOn) { __result = false; return; }   /* LT + Select opens Controller Support Plus Settings, not the chat */   /* Select opens Controller Support Plus Settings from the pause menu, not the map */   // nothing behind the settings window reacts
+            if ((name == "JoyChat" || name == "JoyMap") && ModSettings.LtSelectChord) { __result = false; return; }   /* LT + Select opens Controller Support Plus Settings, not the chat */   /* Select opens Controller Support Plus Settings from the pause menu, not the map */   // nothing behind the settings window reacts
             if (name == "JoyMenu" && __result && Favorites.QuickChord) { __result = false; return; }   // LT + Start opens the Controller Hotbar window, not the menu
             if (Cursor.On)
             {
@@ -593,6 +707,8 @@ namespace ControllerPro
     [HarmonyPatch(typeof(ZInput), "GetButtonUp")]
     static class Patch_GetButtonUp
     {
+        /* after Jotunn's own postfix (1.0.1): it sets the result back to the game's raw value, so ours must come last */
+        [HarmonyAfter(Plugin.JotunnGuid)]
         static void Postfix(string name, ref bool __result)
         {
             if (!Core.Bypass && ModSettings.Blocking && name.StartsWith("Joy")) { __result = false; return; }
@@ -616,13 +732,15 @@ namespace ControllerPro
     [HarmonyPatch(typeof(ZInput), "GetButton")]
     static class Patch_GetButton
     {
+        /* after Jotunn's own postfix (1.0.1): it sets the result back to the game's raw value, so ours must come last */
+        [HarmonyAfter(Plugin.JotunnGuid)]
         static void Postfix(string name, ref bool __result)
         {
             if (!__result || Core.Bypass) return;
             if (ModSettings.Blocking && name.StartsWith("Joy")) { __result = false; return; }
             if (Core.PadRadialLt && name == "JoyRadial") { __result = false; return; }
             if (name == "JoyMap" && ModSettings.MenuButtonUp) { __result = false; return; }
-            if (name == "JoyChat" && ModSettings.LtSelectOn) { __result = false; return; }   /* LT + Select opens Controller Support Plus Settings, not the chat */   /* Select opens Controller Support Plus Settings from the pause menu, not the map */
+            if ((name == "JoyChat" || name == "JoyMap") && ModSettings.LtSelectChord) { __result = false; return; }   /* LT + Select opens Controller Support Plus Settings, not the chat */   /* Select opens Controller Support Plus Settings from the pause menu, not the map */
             if (Remap.NoCrouch && name == "JoyCrouch") { __result = false; return; }   // PRO: the right stick click sheathes
             if (Deposit.Swallow(name)) { __result = false; return; }   // the button that closed the bag by itself is still down
             if (Cursor.On && name.Length > 9 && name[3] == 'L' && name[4] == 'S') { __result = false; return; }
@@ -2029,7 +2147,7 @@ namespace ControllerPro
     // and gives back vanilla buttons; the rest of the mod (inventory, favorites, hints) works in every layout.
     static class Pro
     {
-        public const string Name = "PRO controller";
+        public const string Name = "Controller Support Plus";   /* 1.0.1 (Rob): "PRO controller" before; the saved choice (UseProLayout) keeps its name, so players on it stay on it */
         const int Alt1 = 1;
         public static bool On { get { return Plugin.Enabled.Value && Plugin.ProLayout.Value && (int)ZInput.InputLayout == Alt1; } }
 
@@ -2184,13 +2302,21 @@ namespace ControllerPro
                 if (log != null) log.Append(" | " + f + ": " + t.text);
                 if (f == "joyButton1" || f == "joyButton9") continue;   // B and the right stick click have their own PRO labels
                 string want = null;
+                /* 1.0.1 (Rob): on the Controller Support Plus layout the left stick click's greyed second job (auto-pickup, with
+                   the alternate key held) is off, so its legend goes; the greyed parts are the alternate key's jobs */
+                bool noPickup = Pro.On && f == "joyButton8" && t.text.IndexOf("<color=", StringComparison.OrdinalIgnoreCase) >= 0;
                 if (on && f == "joyAxis9") want = "Hold: Quick slots";   // LT (Rob's name for the second set, 2026-10-31)
-                else if (on && t.text.IndexOf("adial", StringComparison.OrdinalIgnoreCase) >= 0)
+                else if ((on && t.text.IndexOf("adial", StringComparison.OrdinalIgnoreCase) >= 0) || noPickup)
                 {
                     // the label without its radial part ("Radial / Something" keeps "Something"; radial alone goes blank)
                     List<string> keep = new List<string>();
-                    foreach (string part in t.text.Split('/'))
-                        if (part.IndexOf("adial", StringComparison.OrdinalIgnoreCase) < 0 && part.Trim().Length > 0) keep.Add(part.Trim());
+                    foreach (string part in t.text.Split(new[] { " / " }, StringSplitOptions.None))   /* split on " / " only (1.0.1): a "</color>" holds a slash too, and a lone "/" cut it, leaving "color>" on the left stick */
+                    {
+                        if (part.Trim().Length == 0) continue;
+                        if (on && part.IndexOf("adial", StringComparison.OrdinalIgnoreCase) >= 0) continue;
+                        if (noPickup && part.IndexOf("<color=", StringComparison.OrdinalIgnoreCase) >= 0) continue;
+                        keep.Add(part.Trim());
+                    }
                     want = keep.Count > 0 ? string.Join(" / ", keep.ToArray()) : " ";
                 }
                 if (want != null || held != null) ProLabel.Hold(t, want);
@@ -3339,6 +3465,8 @@ namespace ControllerPro
         static int closedFrame = -1, seenFrame = -1, focus, openedFrame = -1;
         static bool overMenu, overWorld;
         public static bool LtSelectOn { get { return Plugin.LtSelectSettings.Value && Plugin.Enabled.Value && ZInput.IsGamepadActive(); } }
+        /* LT is held with the setting on: Select then opens the window, so neither the map nor the chat takes it (1.0.0) */
+        public static bool LtSelectChord { get { return LtSelectOn && Core.RawHeld("JoyLTrigger"); } }
         static GameObject root;
         static RectTransform panel;
         public static bool Blocking { get { return Open || Time.frameCount == closedFrame || releaseWait || HudPick.Blocking; } }   /* the first-launch HUD pick holds the buttons the same way */
@@ -3355,6 +3483,8 @@ namespace ControllerPro
         class Row
         {
             public string name; public string[] shown; public Func<int> index; public Action<int> set; public bool stepper, check, header; public Func<string> named; public Toggle box;
+            /* a value beside a checkbox (1.0.2, the LT + D-pad layer): in the arrows' value text, the Settings screen's grey while sideOff */
+            public Func<string> sideText; public Func<bool> sideOff; public TMP_Text side;
             public int tab;   /* the tab it shows on (0.92.21): the groups are tabs now, the rows before the first group are General */
             public Action act;   /* a button row: A runs it (0.91.0, Choose HUD layout) */
             public TMP_Text label, value; public Image plate;
@@ -3440,6 +3570,7 @@ namespace ControllerPro
         // the row shown on the game's dropdown instead of between two arrows
         /* a name written fresh each time the window shows (the buttons' glyphs, for whichever controller is in use) */
         static Row Named(Row r, Func<string> n) { r.named = n; return r; }
+        static Row Side(Row r, Func<string> text, Func<bool> off) { r.sideText = text; r.sideOff = off; return r; }
         /* a group's name with a thin line under it: never focused, only read */
         static Row Group(string name) { return new Row { name = name, header = true, shown = new string[0] }; }
         static Row[] rowList;
@@ -3455,24 +3586,35 @@ namespace ControllerPro
                     /* Reset mod (dev) left the list (0.92.21, Rob): a Select button in the screen's top left corner */
                     /* between two arrows like the rest (0.92.20, Rob; the game's dropdown before) */
                     Choice("HUD preset", Plugin.HudPreset, new[] { "Vanilla", "BottomHUD", "ActionRPG" }, new[] { "Vanilla", "Bottom HUD", "Action RPG" }),
+                    /* the controller cursor (1.0.1, Rob; a checkbox since 1.0.4), then LT + Select (moved here from the last tab, 1.0.4) */
+                    Check("Controller cursor", Plugin.CursorEnabled),
+                    Named(Check("LT + Select opens Controller Support Plus Settings", Plugin.LtSelectSettings), delegate { return Hints.Glyph("JoyLTrigger") + " + " + Hints.Glyph("JoyMap") + "  opens Controller Support Plus Settings"; }),
                     /* alone at the top, no group: it changes everything below it */
                     /* the hotbar's own group, first under the preset (0.90.4, Rob) */
                     Group("Hotbar"),
                     // the rest: the value between two arrows, stepped with left and right
                     Choice("Hotbar layout", Plugin.HotbarStyle, new[] { "Cross", "CompactCross", "Row" }, new[] { "Cross", "Compact cross", "Row" }),
-                    /* what LT + D-pad does, between two arrows (0.92.20, Rob; a "Swap D-pad items and LT actions" checkbox before):
-                       the function shortcuts (consumables, emotes, sit, hammer) or the item shortcuts (hotbar 1-4), the D-pad
-                       alone doing the other */
-                    Named(new Row { name = "LT + D-pad function", shown = new[] { "Function shortcuts", "Item shortcuts" }, index = delegate { return Plugin.SwapDpadActions.Value ? 1 : 0; }, set = delegate(int i) { Plugin.SwapDpadActions.Value = i == 1; } },
-                          delegate { string d = Hints.DpadGlyph(); if (string.IsNullOrEmpty(d)) d = "D-pad"; return Hints.Glyph("JoyLTrigger") + " + " + d + " function"; }),
+                    /* 1.0.2 (Rob): what the D-pad alone does, between two arrows, Item shortcuts first (the default); LT + D-pad
+                       holds the other set. The same saved setting as the "LT + D-pad function" selector before it (0.92.20-1.0.1),
+                       read the other way round, so nobody's D-pad changes */
+                    Named(new Row { name = "D-pad shortcuts", shown = new[] { "Item shortcuts", "Function shortcuts" }, index = delegate { return Plugin.SwapDpadActions.Value ? 1 : 0; }, set = delegate(int i) { Plugin.SwapDpadActions.Value = i == 1; } },
+                          delegate { string d = Hints.DpadGlyph(); if (string.IsNullOrEmpty(d)) d = "D-pad"; return d + " shortcuts"; }),
+                    /* the LT + D-pad layer on or off (1.0.1, Rob; 1.0.2: its name stays as it is, yellow): beside the box, in the
+                       arrows' value text, the set LT holds (the other one from the row above), or a grey "Off" while unticked */
+                    Side(Named(Check("LT + D-pad shortcuts", Plugin.LtDpadLayer),
+                          delegate { string d = Hints.DpadGlyph(); if (string.IsNullOrEmpty(d)) d = "D-pad"; return Hints.Glyph("JoyLTrigger") + " + " + d + " shortcuts"; }),
+                          delegate { return !Plugin.LtDpadLayer.Value ? "Off" : Plugin.SwapDpadActions.Value ? "Item shortcuts" : "Function shortcuts"; },
+                          delegate { return !Plugin.LtDpadLayer.Value; }),
                     Group("HUD elements"),
                     Check("Show button hints", Plugin.ShowMapHints),   /* a checkbox since 0.90.4 (On/Off arrows, "Button hints", before) */
                     /* global: kept as they are when the preset changes */
                     Choice("Buffs and debuffs style", Plugin.BuffStyle, new[] { "Vanilla", "Detailed", "Slim" }, new[] { "Vanilla", "Detailed", "Slim" }),
                     Sample(Choice("Pick up notification style", Plugin.FeedPos, new[] { "New", "Vanilla" }, new[] { "Modern", "Vanilla" })),
                     Choice("Equip progress bar style", Plugin.EquipProgress, new[] { "Ring", "Vanilla" }, new[] { "Radial progress", "Vanilla" }),
-                    Group("Input and compatibility"),
-                    Named(Check("LT + Select opens Controller Support Plus Settings", Plugin.LtSelectSettings), delegate { return Hints.Glyph("JoyLTrigger") + " + " + Hints.Glyph("JoyMap") + "  opens Controller Support Plus Settings"; }),
+                    /* "Misc" (1.0.4, Rob; "Input and compatibility" before) */
+                    Group("Misc"),
+                    /* the game's auto-pickup (1.0.1; a checkbox here since 1.0.4): its block + left stick chord is off on the Controller Support Plus layout */
+                    Check("Auto-pickup", Plugin.AutoPickup),
                     Check("Keep HUD layout while using keyboard and mouse", Plugin.HudOnKbm),   // last: it changes where the rest applies
                 };
                 if (tabNames == null)
@@ -3570,6 +3712,7 @@ namespace ControllerPro
         static void Drive()
         {
             if (HudPick.Open) return;   /* the HUD pick opened from here has the buttons */
+            if (Time.frameCount == openedFrame) return;   /* the A that opened it from the menu's picture is not also a press in it (1.0.0) */
             {
                 int d = Core.RawDown("JoyDPadLeft") || Core.RawDown("JoyLStickLeft") ? -1 : Core.RawDown("JoyDPadRight") || Core.RawDown("JoyLStickRight") ? 1 : 0;
                 int v = Core.RawDown("JoyDPadUp") || Core.RawDown("JoyLStickUp") ? -1 : Core.RawDown("JoyDPadDown") || Core.RawDown("JoyLStickDown") ? 1 : 0;
@@ -3593,6 +3736,14 @@ namespace ControllerPro
 
         static void Set(Row r, int i) { r.set(i); Refresh(); }
         /* the dropdown rows went with the HUD preset's arrows (0.92.20); their list handling was taken out for V1 */
+
+        /* closes the window and, opened over the pause menu, that menu too: straight back to play (1.0.4, finishing Rerun setup) */
+        public static void CloseToPlay()
+        {
+            bool menu = overMenu;
+            Close();
+            if (menu && Menu.instance != null && Menu.IsVisible()) Menu.instance.Hide();
+        }
 
         public static void Close()
         {
@@ -3640,6 +3791,12 @@ namespace ControllerPro
                 if (r.box != null && r.box.isOn != (at == 1)) r.box.isOn = at == 1;
                 if (r.value != null) r.value.text = r.stepper ? r.shown[at] : "<    " + r.shown[at] + "    >";
                 if (r.label != null && r.label.color != labelColour) r.label.color = labelColour;   // always the Settings screen's full yellow
+                if (r.side != null && r.sideText != null)
+                {
+                    string st = r.sideText(); if (r.side.text != st) r.side.text = st;
+                    Color sc = r.sideOff != null && r.sideOff() ? GreyLook() : Color.white;   /* white as the arrows' value; grey when off */
+                    if (r.side.color != sc) r.side.color = sc;
+                }
                 /* the focus on the control itself, as the Settings screen shows it (0.90.5): the button, the checkbox, both
                    arrows. The row's soft light and the dimmed values of the other rows only where a control has no look of its own. */
                 bool looks = false;
@@ -3744,27 +3901,66 @@ namespace ControllerPro
         static GameObject menuBtn; static Menu btnFor; static bool btnLogged;
         static readonly FieldInfo F_settingsInst = AccessTools.Field(typeof(Menu), "m_settingsInstance");
         public static bool MenuButtonUp { get { return menuBtn != null && menuBtn.activeInHierarchy; } }
+        static bool WantButton(Menu m)
+        {
+            return m != null && Menu.IsVisible() && Plugin.Enabled.Value && ZInput.IsGamepadActive() && !Open
+                && InventoryGui.instance != null && Player.m_localPlayer != null && (F_settingsInst == null || F_settingsInst.GetValue(m) as GameObject == null)
+                && m.m_gamepadRoot != null && m.m_gamepadRoot.activeInHierarchy;
+        }
+        /* the pause menu shown on keyboard and mouse (or with the mod off): the list and the picture go back to the game's places */
+        static bool WantGameLayout(Menu m)
+        {
+            return m == null || (Menu.IsVisible() && !Open && (!Plugin.Enabled.Value || !ZInput.IsGamepadActive() || m.m_gamepadRoot == null || !m.m_gamepadRoot.activeInHierarchy));
+        }
+        // The layout is also set just before the screen is drawn (1.0.0, Rob saw the parts nudge into place on pausing): the
+        // game shows its menu after the mod's own update, so for one frame it was drawn where the game has it.
+        static bool layoutHooked;
+        static void LayoutPass()
+        {
+            try
+            {
+                Menu m = Menu.instance;
+                bool want = WantButton(m);
+                if (want && (menuBtn == null || btnFor != m)) BuildMenuButton(m);
+                if (menuBtn != null && menuBtn.activeSelf != want) menuBtn.SetActive(want);
+                if (want && menuBtn != null) PlaceMenuButton(m);
+                else if (WantGameLayout(m)) Lift(m, 0f);
+            }
+            catch (Exception e) { Canvas.willRenderCanvases -= LayoutPass; Plugin.Log.LogWarning("Pause layout: " + e); }
+        }
         public static void MenuTick()
         {
             Menu m = Menu.instance;
+            if (!layoutHooked) { layoutHooked = true; Canvas.willRenderCanvases += LayoutPass; }
             TextStyle.MeasureHeader(m != null && F_settingsInst != null ? F_settingsInst.GetValue(m) as GameObject : null);
-            bool want = m != null && Menu.IsVisible() && Plugin.Enabled.Value && ZInput.IsGamepadActive() && !Open
-                && InventoryGui.instance != null && Player.m_localPlayer != null && (F_settingsInst == null || F_settingsInst.GetValue(m) as GameObject == null)
-                && m.m_gamepadRoot != null && m.m_gamepadRoot.activeInHierarchy;
+            bool want = WantButton(m);
             if (want && (menuBtn == null || btnFor != m)) BuildMenuButton(m);
             if (menuBtn != null && menuBtn.activeSelf != want) menuBtn.SetActive(want);
-            if (want && menuBtn != null) PlaceMenuButton(m);
-            if (!want) Lift(m, 0f);
+            if (want && menuBtn != null)
+            {
+                PlaceMenuButton(m);
+                EventSystem es = EventSystem.current;
+                if (es != null)
+                {
+                    /* back from the window it opened: focus on the button again (it was hidden while the window was up) */
+                    if (menuWasSelected == menuBtn) { menuWasSelected = null; if (es.currentSelectedGameObject == null) es.SetSelectedGameObject(menuBtn); }
+                }
+            }
+            if (!want && WantGameLayout(m)) Lift(m, 0f);   /* kept between pauses, so the next pause opens already laid out */
             if (Open && (overMenu || overWorld)) { Drive(); return; }
             if (want && menuBtn != null && Core.RawDown("JoyMap")) { Show(InventoryGui.instance, true); return; }
             /* LT + Select in play (the game's chat combination), with the setting on */
             if (!Open && LtSelectOn && InventoryGui.instance != null && Player.m_localPlayer != null && !Menu.IsVisible() && !InventoryGui.IsVisible()
-                && !Minimap.IsOpen() && (Chat.instance == null || !Chat.instance.HasFocus()) && Core.RawDown("JoyChat"))
+                && !Minimap.IsOpen() && (Chat.instance == null || !Chat.instance.HasFocus()) && Core.RawHeld("JoyLTrigger") && (Core.RawDown("JoyMap") || Core.RawDown("JoyChat")))   /* LT held and Select, read as buttons (1.0.0): the game's JoyChat is the alt key + Select, and the alt key is LB, not LT, in some layouts (the PRO one included) */
             {
                 Show(InventoryGui.instance, false);
                 overWorld = true;
             }
         }
+        // ----- the button: a copy of the game's own dialog button (the Quit dialog's), with Select's glyph beside its name -----
+        // 1.0.0 (Rob): back to this look after a short try of the mod's picture as the button. Under the controller picture,
+        // reached with the D-pad down from the last entry of the menu list, lit with the game button's own focus look; A or
+        // Select opens the window.
         static void BuildMenuButton(Menu m)
         {
             btnFor = m;
@@ -3792,7 +3988,16 @@ namespace ControllerPro
             Button b = menuBtn.GetComponent<Button>();
             b.onClick = new Button.ButtonClickedEvent();
             b.onClick.AddListener(delegate { if (!Open && InventoryGui.instance != null) Show(InventoryGui.instance, true); });
-            Navigation nav = b.navigation; nav.mode = Navigation.Mode.None; b.navigation = nav;
+            /* the D-pad: down goes to the first entry of the menu list (Continue); up from that entry comes here (by itself when
+               the list finds its neighbours on its own, set on it when the list names them) */
+            Selectable first = TopOfList(m);
+            Navigation nav = new Navigation(); nav.mode = Navigation.Mode.Explicit; nav.selectOnDown = first; b.navigation = nav;
+            if (first != null)
+            {
+                Navigation fn = first.navigation;
+                if (fn.mode == Navigation.Mode.Explicit) { fn.selectOnUp = b; first.navigation = fn; }
+                Plugin.Log.LogInfo("Settings button: over '" + first.name + "' with the D-pad (its navigation " + fn.mode + ")");
+            }
             TMP_Text[] texts = menuBtn.GetComponentsInChildren<TMP_Text>(true);
             TMP_Text label = null;
             foreach (TMP_Text x in texts) { if (label == null && x.gameObject.activeSelf) label = x; else x.gameObject.SetActive(false); }
@@ -3811,35 +4016,162 @@ namespace ControllerPro
             menuBtn.SetActive(false);
             Plugin.Log.LogInfo("Settings button: copied the game's '" + src.name + "' (" + rt.sizeDelta + "):" + parts);
         }
-        // ----- where the button sits: the bottom right corner of the screen -----
-        // The pause menu itself is left exactly as the game lays it out (0.84.0-0.85.4 moved or shrank its parts to make
-        // room under the controller picture; Rob preferred the game's own layout). The button sits in the bottom right
-        // corner instead, 30 in from both edges, shown only while the controller picture is.
-        const float CornerGap = 30f;
-        static void Lift(Menu m, float unused) { }
-        /* since 0.91.7 (Rob): just above the pause menu's own list of buttons (Continue, Settings...), centred on it, the
-           list and the controller picture left where the game has them; the bottom right corner only if the list cannot be found */
-        const float AboveList = 24f;
+        /* the first entry of the pause menu's list (Continue) */
+        static Selectable TopOfList(Menu m)
+        {
+            if (m.m_continueButton == null) return null;
+            Selectable best = m.m_continueButton; float high = float.MinValue;
+            foreach (Button lb in m.m_continueButton.transform.parent.GetComponentsInChildren<Button>(true))
+            {
+                if (lb == null || !lb.gameObject.activeSelf) continue;
+                ((RectTransform)lb.transform).GetWorldCorners(lc);
+                if (lc[1].y > high) { high = lc[1].y; best = lb; }
+            }
+            return best;
+        }
+
+        // ----- the pause screen's layout with the controller picture (1.0.0, Rob) -----
+        // One column centred on the screen: the button, the menu list (with the little header art over it), then the controller
+        // picture, a set gap apart, measured by what is drawn (the texts' own letters, not their boxes), so Quit no longer
+        // runs into the picture. Only the list, its header and the picture are moved, as wholes; they go back to the game's own
+        // places whenever the picture is not shown (keyboard and mouse).
+        const float BottomMargin = 24f; const float ColumnGap = 14f,   /* 28 until Rob's second look: still too far apart */ HeaderReach = 260f;
         static readonly Vector3[] lc = new Vector3[4];
+        static Transform lyList, lyArt; static Vector3 lyListOrig, lyArtOrig, lyListAt, lyArtAt, lyBtnAt; static int lyW, lyH; static bool lyLogged;
+        static readonly List<Transform> lyWith = new List<Transform>(); static readonly List<Vector3> lyWithOrig = new List<Vector3>(), lyWithAt = new List<Vector3>();
+        static void Lift(Menu m, float unused)
+        {
+            if (lyList == null && lyArt == null) return;
+            if (lyList != null) lyList.localPosition = lyListOrig;
+            if (lyArt != null) lyArt.localPosition = lyArtOrig;
+            for (int i = 0; i < lyWith.Count; i++) if (lyWith[i] != null) lyWith[i].localPosition = lyWithOrig[i];
+            lyWith.Clear(); lyWithOrig.Clear(); lyWithAt.Clear();
+            lyList = null; lyArt = null;
+        }
+        static readonly Vector4 NoRect = new Vector4(float.MaxValue, float.MaxValue, float.MinValue, float.MinValue);
+        /* what a graphic really draws, in the world: a text's letters, anything else its rectangle */
+        static void Grow(ref Vector4 r, Graphic g)
+        {
+            TMP_Text t = g as TMP_Text;
+            if (t != null)
+            {
+                if (string.IsNullOrEmpty(t.text)) return;
+                t.ForceMeshUpdate();   /* its letters measured even on the first frame it shows */
+                Bounds b = t.textBounds;
+                if (b.size.x < 0.01f || b.size.y < 0.01f) return;
+                Vector3 p0 = t.transform.TransformPoint(b.min), p1 = t.transform.TransformPoint(b.max);
+                r.x = Mathf.Min(r.x, Mathf.Min(p0.x, p1.x)); r.y = Mathf.Min(r.y, Mathf.Min(p0.y, p1.y)); r.z = Mathf.Max(r.z, Mathf.Max(p0.x, p1.x)); r.w = Mathf.Max(r.w, Mathf.Max(p0.y, p1.y));
+                return;
+            }
+            g.rectTransform.GetWorldCorners(lc);
+            r.x = Mathf.Min(r.x, lc[0].x); r.y = Mathf.Min(r.y, lc[0].y); r.z = Mathf.Max(r.z, lc[2].x); r.w = Mathf.Max(r.w, lc[2].y);
+        }
+        static bool Drawn(Graphic g)
+        {
+            if (g == null || !g.enabled || g.color.a < 0.01f) return false;
+            if (menuBtn != null && g.transform.IsChildOf(menuBtn.transform)) return false;
+            g.rectTransform.GetWorldCorners(lc);
+            return lc[2].x - lc[0].x < Screen.width * 0.9f && lc[2].y - lc[0].y < Screen.height * 0.9f;   /* no full-screen ground */
+        }
+        /* the world rectangle of everything drawn under a part (x0, y0, x1, y1), leaving out one part */
+        static Vector4 Bounds(Transform t, Transform skip)
+        {
+            Vector4 r = NoRect;
+            foreach (Graphic g in t.GetComponentsInChildren<Graphic>(false))
+                if (Drawn(g) && (skip == null || !g.transform.IsChildOf(skip))) Grow(ref r, g);
+            return r;
+        }
+        /* the header art over the menu list: what the menu draws just above the list, within its width, outside the list and
+           the picture; moved with the list */
+        static void FindHeader(Menu m, Transform list, Transform art, Vector4 l, float k)
+        {
+            Transform menuRoot = m.m_root != null ? m.m_root : (m.m_menuDialog != null ? m.m_menuDialog : list.parent);
+            string names = "";
+            foreach (Graphic g in menuRoot.GetComponentsInChildren<Graphic>(false))
+            {
+                if (!Drawn(g)) continue;
+                Transform gt = g.transform;
+                if (gt.IsChildOf(list) || gt.IsChildOf(art) || list.IsChildOf(gt) || art.IsChildOf(gt)) continue;
+                Vector4 r = NoRect; Grow(ref r, g);
+                if (r.x > r.z) continue;
+                float mid = (r.x + r.z) * 0.5f;
+                if (mid < l.x || mid > l.z || r.y < l.w - 4f * k || r.y > l.w + HeaderReach * k) continue;
+                bool under = false;
+                foreach (Transform w in lyWith) if (gt.IsChildOf(w)) { under = true; break; }
+                if (under) continue;
+                lyWith.RemoveAll(delegate(Transform w) { return w.IsChildOf(gt); });
+                lyWith.Add(gt);
+                names += " '" + gt.name + "'";
+            }
+            foreach (Transform w in lyWith) lyWithOrig.Add(w.localPosition);
+            if (!lyLogged) Plugin.Log.LogInfo("Pause layout: header over the list:" + (names.Length > 0 ? names : " none found"));
+        }
+        static Transform Mover(Transform t, Transform avoid)
+        {
+            while (t.parent != null && t.parent.GetComponent<LayoutGroup>() != null && !avoid.IsChildOf(t.parent) && !t.parent.IsChildOf(avoid)) t = t.parent;
+            return t;
+        }
         static void PlaceMenuButton(Menu m)
         {
             RectTransform rt = (RectTransform)menuBtn.transform;
-            float k = rt.lossyScale.y;
-            Vector3 at = new Vector3(Screen.width - CornerGap * k - rt.rect.width * k * 0.5f, CornerGap * k + rt.rect.height * k * 0.5f, rt.position.z);
             Transform list = m.m_continueButton != null ? m.m_continueButton.transform.parent : null;
-            if (list != null)
+            Transform art = m.m_gamepadRoot != null ? m.m_gamepadRoot.transform : null;
+            if (list == null || art == null || list == art || art.IsChildOf(list)) return;
+            /* the game lays its entries out itself (a layout group, rebuilt as the menu shows): the part moved is the first one up
+               that no layout places, or the game would put it back between the mod's move and the screen being drawn */
+            list = Mover(list, art); art = Mover(art, list);
+            if (list != lyList || art != lyArt || Screen.width != lyW || Screen.height != lyH)
             {
-                float x0 = float.MaxValue, x1 = float.MinValue, top = float.MinValue;
-                foreach (Button lb in list.GetComponentsInChildren<Button>(false))
+                Lift(m, 0f);
+                /* the entries where the game will have them once its layout is done, before they are measured */
+                for (Transform t = m.m_continueButton.transform.parent; t != null; t = t.parent)
                 {
-                    if (lb == null || lb.gameObject == menuBtn) continue;
-                    ((RectTransform)lb.transform).GetWorldCorners(lc);
-                    x0 = Mathf.Min(x0, lc[0].x); x1 = Mathf.Max(x1, lc[2].x); top = Mathf.Max(top, lc[1].y);
+                    RectTransform r = t as RectTransform;
+                    if (r != null && t.GetComponent<LayoutGroup>() != null) LayoutRebuilder.ForceRebuildLayoutImmediate(r);
+                    if (t == list) break;
                 }
-                if (top > float.MinValue) at = new Vector3((x0 + x1) * 0.5f, top + AboveList * k + rt.rect.height * k * 0.5f, rt.position.z);
+                lyList = list; lyArt = art; lyListOrig = list.localPosition; lyArtOrig = art.localPosition; lyW = Screen.width; lyH = Screen.height;
+                /* measured where the game has them */
+                Vector4 a = Bounds(art, list), l = Bounds(list, null);
+                if (l.x > l.z || a.x > a.z) { lyListAt = list.position; lyArtAt = art.position; lyBtnAt = rt.position; Plugin.Log.LogWarning("Pause layout: the list or the picture was not found, left as the game has them"); return; }
+                float k = rt.lossyScale.y, bh = rt.rect.height * k, gap = ColumnGap * k;
+                FindHeader(m, list, art, l, k);
+                Vector4 top = l;   /* the list with its header */
+                foreach (Transform w in lyWith) foreach (Graphic g in w.GetComponentsInChildren<Graphic>(false)) if (Drawn(g)) Grow(ref top, g);
+                float hh = top.w - top.y, ah = a.w - a.y;
+                float total = hh + gap + ah + gap + bh;
+                float cx = Screen.width * 0.5f;
+                float bTop = Mathf.Min(Screen.height - gap, BottomMargin * rt.lossyScale.y + total),   /* low on the screen, the picture just above its bottom edge (Rob's fourth look; centred before) */ hTop = bTop - bh - gap, aTop = hTop - hh - gap;   /* the button on top since Rob's third look; under the picture before */
+                /* centred on the entries' own words (Continue, Save...), not on the art around them, which reaches further left */
+                Vector4 words = NoRect;
+                foreach (TMP_Text t in list.GetComponentsInChildren<TMP_Text>(false)) if (Drawn(t)) Grow(ref words, t);
+                float listMid = words.x <= words.z ? (words.x + words.z) * 0.5f : (l.x + l.z) * 0.5f;
+                Vector3 d = new Vector3(cx - listMid, hTop - top.w, 0f);
+                lyListAt = list.position + d;
+                foreach (Transform w in lyWith) lyWithAt.Add(w.position + d);
+                /* centred on the controller drawing itself, not on its labels (they reach further out on the left) */
+                float artMid = (a.x + a.z) * 0.5f, biggest = 0f;
+                foreach (Graphic g in art.GetComponentsInChildren<Graphic>(false))
+                {
+                    if (!(g is Image || g is RawImage) || !Drawn(g) || g.transform.IsChildOf(list)) continue;
+                    g.rectTransform.GetWorldCorners(lc);
+                    float area = (lc[2].x - lc[0].x) * (lc[2].y - lc[0].y);
+                    if (area > biggest) { biggest = area; artMid = (lc[0].x + lc[2].x) * 0.5f; }
+                }
+                lyArtAt = art.position + new Vector3(cx - artMid, aTop - a.w, 0f);
+                lyBtnAt = new Vector3(cx, bTop - bh * 0.5f, rt.position.z);
+                if (!lyLogged)
+                {
+                    lyLogged = true;
+                    Plugin.Log.LogInfo("Pause layout: moving '" + list.name + "' (the list) and '" + art.name + "' (the picture)");
+                    Plugin.Log.LogInfo("Pause layout: list and header " + hh + " high (its words' middle " + listMid + ", all of it " + (l.x + l.z) * 0.5f + "), picture " + ah + " high (" + (a.z - a.x) + " wide), button " + bh + ", gap " + gap + ", column " + total + " on a " + Screen.width + " x " + Screen.height + " screen");
+                }
             }
-            if ((rt.position - at).sqrMagnitude > 0.25f) rt.position = at;
-            if (!btnLogged) { btnLogged = true; Plugin.Log.LogInfo("Settings button: " + (list != null ? "over the menu list" : "in the bottom right corner") + " at " + at); }
+            /* kept in place every frame: the button last, as it sits in the picture's part it moves with */
+            if ((list.position - lyListAt).sqrMagnitude > 0.25f) list.position = lyListAt;
+            for (int i = 0; i < lyWith.Count && i < lyWithAt.Count; i++) if (lyWith[i] != null && (lyWith[i].position - lyWithAt[i]).sqrMagnitude > 0.25f) lyWith[i].position = lyWithAt[i];
+            if ((art.position - lyArtAt).sqrMagnitude > 0.25f) art.position = lyArtAt;
+            if ((rt.position - lyBtnAt).sqrMagnitude > 0.25f) rt.position = lyBtnAt;
         }
         static void Show(InventoryGui gui, bool menu)
         {
@@ -3894,12 +4226,12 @@ namespace ControllerPro
                 r.plate = Hints.Img(Hints.New("rowLight" + i, into), Hints.Plate(), new Color(1f, 1f, 1f, 0.08f));
                 Hints.Place(r.plate.gameObject, top, top, top, new Vector2(0f, y), new Vector2(BoxW - 12f, RowH));
                 r.label = Hints.Text(Hints.New("rowName" + i, into), like, 20f, Color.white, TextAlignmentOptions.MidlineLeft);
-                Hints.Place(r.label.gameObject, tl, tl, tl, new Vector2(44f, y), new Vector2(r.check ? 540f : 300f, RowH));   /* a checkbox row's name has the room up to the box */
+                Hints.Place(r.label.gameObject, tl, tl, tl, new Vector2(44f, y), new Vector2(r.check && r.sideText == null ? 540f : 300f, RowH));   /* a checkbox row's name has the room up to the box (or up to its side value) */
                 r.label.enableWordWrapping = false;
                 r.label.text = r.name;
                 Look(r.label, like);
                 TextStyle.Apply(r.label, TextStyle.Kind.Header);
-                if (r.check && CheckBox(r, i, y)) continue;
+                if (r.check && CheckBox(r, i, y)) { if (r.sideText != null) SideValue(r, i, y, like); continue; }
                 if (r.act != null && RowButton(r, i, y)) continue;
                 // the game's own two-arrow control (the Graphics preset's: two framed arrow buttons, a dark bar between)
                 if (Stepper(r, i, y)) continue;
@@ -4208,6 +4540,30 @@ namespace ControllerPro
         static readonly FieldInfo F_gpRight = AccessTools.Field(typeof(Valheim.SettingsGui.GraphicsSettings), "m_graphicPresetRight");
         static bool stepLogged;
         static string PathIn(Transform t, Transform root) { string p = ""; while (t != null && t != root) { p = t.name + (p == "" ? "" : "/" + p); t = t.parent; } return p; }
+        // The value beside a checkbox (1.0.2, Rob): a copy of an arrows row's value text (the game's preset arrows' own
+        // 'Value' text), so it reads as the arrows' value does; right-aligned, ending a gap to the left of the box.
+        static void SideValue(Row r, int i, float y, TMP_Text like)
+        {
+            TMP_Text tpl = null;
+            foreach (Row o in rows) if (o.stepper && o.value != null) { tpl = o.value; break; }
+            TMP_Text t;
+            if (tpl != null)
+            {
+                t = UnityEngine.Object.Instantiate(tpl.gameObject, into, false).GetComponent<TMP_Text>();
+                foreach (Component c in t.GetComponentsInChildren<Component>(true)) if (c != null && c.GetType().Name == "Localize") UnityEngine.Object.Destroy(c);
+            }
+            else { t = Hints.Text(Hints.New("rowSide" + i, into), like, 20f, Color.white, TextAlignmentOptions.MidlineRight); Look(t, like); }
+            t.name = "rowSide" + i;
+            t.gameObject.SetActive(true);
+            t.enableWordWrapping = false; t.enableAutoSizing = false;
+            t.alignment = TextAlignmentOptions.MidlineRight;
+            /* the copy leaves the arrows' own scale behind: its size is matched so it reads the same on screen */
+            if (tpl != null) { t.transform.localScale = Vector3.one; float a = tpl.transform.lossyScale.y, b = into.lossyScale.y; if (a > 0f && b > 0f) t.fontSize = tpl.fontSize * a / b; }
+            Vector2 tr = new Vector2(1f, 1f);
+            Hints.Place(t.gameObject, tr, tr, tr, new Vector2(-(44f + CheckSize + 14f), y), new Vector2(240f, RowH));
+            r.side = t;
+        }
+
         static bool Stepper(Row r, int i, float y)
         {
             Menu m = Menu.instance;
@@ -4569,7 +4925,7 @@ namespace ControllerPro
                 }
         }
         static Texture2D icon; static bool iconTried;
-        static Texture2D Icon()
+        public static Texture2D Icon()   /* also the pause menu's settings button (1.0.0) */
         {
             if (iconTried) return icon;
             iconTried = true;
@@ -4586,7 +4942,7 @@ namespace ControllerPro
                     if (!System.IO.File.Exists(f)) return null;
                     png = System.IO.File.ReadAllBytes(f);
                 }
-                icon = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                icon = new Texture2D(2, 2, TextureFormat.RGBA32, true);   /* mipmapped, so it stays smooth drawn small (1.0.0) */
                 if (!ImageConversion.LoadImage(icon, png)) icon = null;
             }
             catch (Exception e) { Plugin.Log.LogWarning("HUD pick: picture not loaded: " + e.Message); icon = null; }
@@ -4705,7 +5061,11 @@ namespace ControllerPro
             before = null;
             Plugin.HudPickSeen.Value = true;
             Plugin.Log.LogInfo("HUD pick: " + Presets[sel] + " with the " + Bars[bar] + " hotbar");
+            /* finished from Rerun setup (1.0.4, Rob): back to play, not to the settings window it was opened from */
+            bool wasSettings = fromSettings;
+            fromSettings = false;
             Close();
+            if (wasSettings) ModSettings.CloseToPlay();
             plaqueK = 0f; Slide();
             /* the game's own big centre message, as for resting (0.91.4, Rob): the setup is done */
             if (Player.m_localPlayer != null) Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Controller setup applied", 0, null, false);
@@ -9361,9 +9721,11 @@ namespace ControllerPro
             Core.FavLT = secondary;     // LT no longer opens the radial or stows the weapon
             Core.FavFace = ltHeld;      // while LT is held the face buttons belong to the secondary set
             // the D-pad set does the actions this frame: with LT held, or (swapped) without it
-            PadActions = world && (Plugin.SwapDpadActions.Value ? !ltHeld : ltHeld);
+            /* 1.0.1 (Rob): with the LT + D-pad layer off, LT leaves the D-pad as it is: the D-pad alone's set, held or not */
+            bool layer = Plugin.LtDpadLayer.Value;
+            PadActions = world && (Plugin.SwapDpadActions.Value ? !(ltHeld && layer) : (ltHeld && layer));
             if (PadActions) Core.DownOwned = true;
-            bool ltAny = SecondaryAvailable() && ZInput.GetButton("JoyLTrigger");
+            bool ltAny = SecondaryAvailable() && ZInput.GetButton("JoyLTrigger") && layer;
             PadShows = Plugin.SwapDpadActions.Value ? !ltAny : ltAny;
             if (Core.RawHeld("JoyLTrigger") && !ltLogged) { ltLogged = true; Plugin.Log.LogInfo("D-pad actions: LT held, world " + world + ", LT set free " + secondary + ", layout " + (int)ZInput.InputLayout + ", actions on " + PadActions + ", swapped " + Plugin.SwapDpadActions.Value); }   /* the game's own D-pad down (sit, or the Forsaken power) stays away */
 
@@ -10066,8 +10428,6 @@ namespace ControllerPro
 
         // The minimap's distance from the right edge of the screen, in the hotbar's space: the one edge distance every corner
         // piece of the HUD keeps (the minimap, the resource bars, the hotbar). 30 when there is no map to measure.
-        const float RowGlyphHalf = 8f;   // half the height of a glyph under a row slot
-        static readonly Vector3[] ec = new Vector3[4];
         static float lastEdge = 30f;
         // the map picture's distance from the side (or, vertical, from the top and so, moved down, from the bottom)
         static float lastEdgeY = 30f;
@@ -10203,9 +10563,6 @@ namespace ControllerPro
         // the slots run left to right as the buttons sit: left, up, down, right on the D-pad; X, Y, A, B on the face.
         // Each slot's button glyph sits under it. The cross keeps its own layout exactly as it was.
         const float DiamondAt = 15.5f, DiamondSize = 14f;   // the cross's face glyphs: a tight diamond in the middle, a small gap between neighbours (19 overlapped)
-        const float RowLtRest = 0.45f;
-        const float CrossCentreFromBottom = 110f;
-        const float RowEdge = 40f;   // the row in the bottom right: from its right end to the screen edge   // the centred cross: its middle, from the bottom of the screen   // the row's LT group while LT is not held
         const float RowPitch = 64f, RowGroupGap = 80f,   /* between the row's two groups, LT in it: 80 (56 until 0.82.3) */ RowFromBottom = 100f, RowGlyphGap = 19f;   /* 0.89.16 (Rob): the glyphs a little lower, clear of the boxes (14 before) */
         static readonly float[] RowX = { -0.5f, 0.5f, -1.5f, 1.5f };   // by slot: up, down, left, right (and Y, A, X, B)
         static float RowHalf { get { return 1.5f * RowPitch + SquareSize * 0.5f + RowGroupGap * 0.5f; } }
@@ -10236,8 +10593,6 @@ namespace ControllerPro
         }
         const float LtBox = 40f;   // fits the larger LT (34 until 0.82.3)
         const float FaceDark = 0.35f;   /* the face glyphs' brightness while LT is not held: darkened to 35%, fully opaque (0.91.16) */
-        const float FaceRest = 0.3f;   // 0.45 until 0.82.3   // the face buttons' glyphs while LT is not held (row and compact cross)
-        const float LtFill = 0.65f;   // LT's dark backing while held: 65%, as the slots' plate   // LT's square while held: black at 50%, as the slots' plate (white 8% in 0.81.3)   // the square that lights around LT while it is held
         // LT's outline while held (the row): one image of LT's own glyph grown evenly by LtRim all round, black at 50%. Made
         // from the glyph's own pixels (whichever controller's), so the rim is the same thickness everywhere and the same
         // shade (copies laid over each other came out uneven or had to be solid black, 0.82.7-0.82.10). Made again when the
@@ -10557,18 +10912,21 @@ namespace ControllerPro
                 // square kept its black under an 8% white layer, with a white outline 2 clear of it.
                 // (0.82.1: the square keeps its black; only the plate behind it comes up)
                 Color restBox = BoxRest;
-                Color white = Color.clear, back = new Color(0f, 0f, 0f, LtBackAlpha * ltK * hudAlpha);
+                Color white = Color.clear;
                 /* the D-pad set takes the same held look (0.87.4): with LT held it does something else too (the actions, or
                    swapped, the items) */
                 foreach (Square[] heldSet in new Square[][] { squares2, squares })
                 foreach (Square q in heldSet)
                 {
                     if (q == null) continue;
+                    /* 1.0.1: with the LT + D-pad layer off, LT does nothing to the D-pad, so its squares keep their resting look */
+                    float k = heldSet == squares && !Plugin.LtDpadLayer.Value ? 0f : ltK;
+                    Color back = new Color(0f, 0f, 0f, LtBackAlpha * k * hudAlpha);
                     if (q.halo != null && q.halo.color != Color.clear) q.halo.color = Color.clear;
                     if (q.bg != null && q.bg.color != restBox) q.bg.color = restBox;
                     if (q.tint != null && q.tint.color != white) q.tint.color = white;
                     if (q.back != null && q.back.color != back) q.back.color = back;
-                    Color line = new Color(1f, 1f, 1f, HeldLineAlpha * ltK * hudAlpha), glow = new Color(1f, 1f, 1f, HeldGlowAlpha * ltK * hudAlpha);
+                    Color line = new Color(1f, 1f, 1f, HeldLineAlpha * k * hudAlpha), glow = new Color(1f, 1f, 1f, HeldGlowAlpha * k * hudAlpha);
                     if (q.heldLine != null && q.heldLine.color != line) q.heldLine.color = line;
                     if (q.heldLine != null && line.a > 0.001f) SnapToPixels(q.heldLine.rectTransform);
                     if (q.heldGlow != null && q.heldGlow.color != glow) q.heldGlow.color = glow;

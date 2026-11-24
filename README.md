@@ -12,7 +12,7 @@
 
 - Install with a mod manager (r2modman or Thunderstore Mod Manager). The only dependency is BepInExPack for Valheim, and your mod manager adds it for you.
 - Load into a world with your controller. Press Y on Begin Setup, then pick your hotbar and HUD layout. Each choice previews live.
-- The mod adds its own controller layout, called **PRO**, and turns it on for you. The quick slots, the LT shortcuts and the extra buttons need it.
+- The mod adds its own controller layout, called **Controller Support Plus**, and turns it on for you. The quick slots, the LT shortcuts and the extra buttons need it.
 
 > Button names use Xbox labels. On PlayStation: A = ✕, B = ○, X = □, Y = △, LB/RB = L1/R1, LT/RT = L2/R2, Select = Share/Create.
 
@@ -77,7 +77,7 @@ Buffs and debuffs, the pickup feed and equip progress can each stay vanilla or t
 | Press and hold left stick (L3) | Sort by type. Your hotbar row and equipped gear stay put |
 | X on a mannequin, item stand, item frame or boss altar | Open it like a chest |
 
-### PRO layout buttons
+### Controller Support Plus layout buttons
 
 | Button | What it does |
 | --- | --- |
@@ -85,6 +85,8 @@ Buffs and debuffs, the pickup feed and equip progress can each stay vanilla or t
 | LB + RB | Use your Forsaken power |
 | Right stick click | Sheathe or draw your weapon |
 | Hold LT | Use the quick slots (hotbar 5 to 8) |
+
+Auto-pickup is a setting on this layout, so sprinting while you block no longer toggles it.
 
 You can switch back to one of the game's own layouts anytime in its controller settings.
 
@@ -97,8 +99,11 @@ Tip: turn on **LT + Select** to open the settings straight from play, and use **
 | Setting | Options |
 | --- | --- |
 | HUD preset | Vanilla, Bottom HUD, Action RPG |
+| Auto-pickup | On, Off |
+| Controller cursor | On, Off |
 | Hotbar layout | Cross, Compact cross, Row |
-| LT + D-pad function | Function shortcuts, Item shortcuts |
+| D-pad shortcuts | Item shortcuts, Function shortcuts |
+| LT + D-pad shortcuts | On, Off (the other set) |
 | Buffs and debuffs | Vanilla, Detailed, Slim |
 | Pickup notifications | Modern, Vanilla |
 | Equip progress | Radial ring around the crosshair, Vanilla bar |

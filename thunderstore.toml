@@ -1,0 +1,38 @@
+# Thunderstore CLI (tcli) settings for Controller Support Plus.
+# package.ps1 keeps versionNumber and the BepInExPack version in step with the source and Gale's cache, then runs
+# "tcli build", which only makes the zip. Publishing is a separate command, run by hand (see DEV-NOTES.md).
+# No token here, ever: tcli reads it from the TCLI_AUTH_TOKEN environment variable.
+
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "Rivolus"
+name = "Controller_Support_Plus"
+versionNumber = "1.0.1"
+description = "Valheim, the way it should feel on a controller. Plug and play: a controller hotbar, a pad-friendly inventory, HUD presets and a smarter button layout. Client-side, works on any server."
+websiteUrl = "https://github.com/Rivolus/controller-support-plus"
+containsNsfwContent = false
+
+[package.dependencies]
+denikson-BepInExPack_Valheim = "5.4.2360"
+
+[build]
+icon = "./package/icon.png"
+readme = "./README.md"
+outdir = "../upload"
+
+[[build.copy]]
+source = "./package/plugins/ControllerPro.dll"
+target = "plugins/ControllerPro.dll"
+
+[[build.copy]]
+source = "./CHANGELOG.md"
+target = "CHANGELOG.md"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = [ "valheim" ]
+
+[publish.categories]
+valheim = [ "mods", "client-side", "utility", "ai-generated" ]
